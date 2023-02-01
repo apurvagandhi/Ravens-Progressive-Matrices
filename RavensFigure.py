@@ -15,7 +15,7 @@ class RavensFigure:
     #
     # @param name the name of the figure
     def __init__(self, name, problemName, setName):
-        # The name of the figure. The name of the figure will always match
+        # The name of the figure. The name of the figure will always match 
         # the HashMap key for this figure.
         #
         # The figures in the problem will be named A, B, and C for 2x1 and 2x2

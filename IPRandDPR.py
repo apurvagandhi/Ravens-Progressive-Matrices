@@ -2,11 +2,13 @@ from PIL import Image
 import numpy
 import ImageUtil
 import cv2 
+# import structural_similarity as compare_ssim
+
 
 #******************************************************
 # Name: Apurva Gandhi
-# Last Updated Date: 03.15.2023
-# Last completed assignment: Milestone 3
+# Last Updated Date: 01.21.2023
+# Last completed assignment: Milestone 1
 # Agent for solving Raven's Progressive Matrices. 
 #******************************************************
 DIFFERENCE_TOLERENCE = 0.01
@@ -70,9 +72,13 @@ class Agent:
     
     def largest_value_index(self, arr, n):
     
+        # Initialize maximum element
         max = arr[0]
         largest_index = 0
     
+        # Traverse array elements from second
+        # and compare every element with
+        # current max
         for i in range(1, n):
             if arr[i] > max:
                 max = arr[i]
@@ -92,6 +98,7 @@ class Agent:
             possible_options = self.search_answer_in_options(image_H)
             if(len(possible_options) == 0):
                 return -10           
+            print("Possible options are", possible_options)
             return self.another_method(image_H, possible_options)
         else:
             possible_answers = []
@@ -99,7 +106,10 @@ class Agent:
             possible_answers.append(self.calculate_horizontal_relationship_2(image_B, image_C, image_E, image_F, image_H))
             possible_answers.append(self.calculate_vertical_relationship_1(image_A, image_G, image_B, image_H, image_C))
             possible_answers.append(self.calculate_vertical_relationship_2(image_D, image_G, image_E, image_H, image_F))
+            print(possible_answers)
             count = [0] * 8
+           
+
             for relationship in possible_answers:
                 for method in relationship:
                     count[0] += method.count(1)
@@ -111,8 +121,74 @@ class Agent:
                     count[6] += method.count(7)
                     count[7] += method.count(8)
 
+            print(count)
             print(self.largest_value_index(count, len(count))+1)
             return self.largest_value_index(count, len(count))+1
+            IPR_AC = self.intersection_pixel_ratio(image_A, image_C)
+            IPR_DF = self.intersection_pixel_ratio(image_D, image_F)
+
+            IPR_BC = self.intersection_pixel_ratio(image_B, image_C)
+            IPR_EF = self.intersection_pixel_ratio(image_E, image_F)
+            
+            IPR_AG = self.intersection_pixel_ratio(image_A, image_G)
+            IPR_BH = self.intersection_pixel_ratio(image_B, image_H)
+
+            IPR_DG = self.intersection_pixel_ratio(image_D, image_G)
+            IPR_EH = self.intersection_pixel_ratio(image_E, image_H)
+
+            # print("IPR between image A and C is", IPR_AC )
+            # print("IPR between image D and F is", IPR_DF )
+            
+            # print("IPR between image B and C is", IPR_BC )
+            # print("IPR between image E and F is", IPR_EF )
+            
+            # print("IPR between image A and G is", IPR_AG )
+            # print("IPR between image B and H is", IPR_BH )
+            
+            # print("IPR between image D and G is", IPR_DG )
+            # print("IPR between image E and H is", IPR_EH )
+            
+            DPR_AC = self.dark_pixel_ratio(image_A, image_C)
+            DPR_DF = self.dark_pixel_ratio(image_D, image_F)
+
+            DPR_BC = self.dark_pixel_ratio(image_B, image_C)
+            DPR_EF = self.dark_pixel_ratio(image_E, image_F)
+            
+            DPR_AG = self.dark_pixel_ratio(image_A, image_G)
+            DPR_BH = self.dark_pixel_ratio(image_B, image_H)
+
+            DPR_DG = self.dark_pixel_ratio(image_D, image_G)
+            DPR_EH = self.dark_pixel_ratio(image_E, image_H)
+
+            print("IPR between image A and C is", IPR_AC )
+            print("IPR between image D and F is", IPR_DF )
+            
+            # print("IPR between image B and C is", IPR_BC )
+            # print("IPR between image E and F is", IPR_EF )
+            
+            # print("IPR between image A and G is", IPR_AG )
+            # print("IPR between image B and H is", IPR_BH )
+            
+            # print("IPR between image D and G is", IPR_DG )
+            # print("IPR between image E and H is", IPR_EH )
+
+            # print("__")
+            print("DPR between image A and C is", DPR_AC )
+            print("DPR between image D and F is", DPR_DF )
+            
+            # print("DPR between image B and C is", DPR_BC )
+            # print("DPR between image E and F is", DPR_EF )
+            
+            # print("DPR between image A and G is", DPR_AG )
+            # print("DPR between image B and H is", DPR_BH )
+            
+            # print("DPR between image D and G is", DPR_DG )
+            # print("DPR between image E and H is", DPR_EH )
+    
+            for i in range(1,9):
+                print("DPR between G and " + str(i) + " " + str(self.dark_pixel_ratio(image_H, self.get_Image_As_Array(str(i)))))
+            for i in range(1,9):
+                print("IPR between G and " + str(i) + " " + str(self.intersection_pixel_ratio(image_H, self.get_Image_As_Array(str(i)))))
 
     def solve2x2(self,problem):
         image_A = self.get_Image_As_Array('A')
@@ -177,6 +253,7 @@ class Agent:
         option_based_on_ipr = self.closet_ipr_ratio_from_option(IPR_AG + IPR_BH / 2, c)
         return option_based_on_dpr, option_based_on_ipr
 
+    
     def calculate_vertical_relationship_2(self,d,g,e,h,f):
         DPR_DG = self.dark_pixel_ratio(d, g)
         DPR_EH = self.dark_pixel_ratio(e, h)
@@ -185,7 +262,8 @@ class Agent:
         option_based_on_dpr = self.closet_dpr_ratio_from_option(DPR_DG + DPR_EH / 2, f)
         option_based_on_ipr = self.closet_ipr_ratio_from_option(IPR_DG + IPR_EH / 2, f)
         return option_based_on_dpr, option_based_on_ipr
-    
+
+        
     def closet_dpr_ratio_from_option(self, relationship_dpr, image):
         possible_choice = []
         for i in range(1,9):
@@ -201,34 +279,58 @@ class Agent:
             if abs(relationship_dpr - option_dpr) < 0.4:
                 possible_choice.append(i)
         return possible_choice
-  
+
+        
+
+        
+        
     def search_answer_in_options(self, search_frame):
         possible_answers = []
         for i in range(1,7):
+            # print("searching for answer in image msi index ", i)
+            # print("Searching for possible answers using DPR with value", self.calculate_mse(search_frame, self.get_Image_As_Array(str(i))))
+            # print("Searching for possible answers using MSE with value", calculate_mse(search_frame, self.get_Image_As_Array(str(i))))
+
+            # if self.calculate_mse(search_frame, self.get_Image_As_Array(str(i))) < DIFFERENCE_TOLERENCE:
             if calculate_mse(search_frame, self.get_Image_As_Array(str(i))) < IDENTICAL_TOLERENCE:
                 print(i)
                 possible_answers.append(i)
+        # if (len(possible_answers)) == 0:
+        #     for i in range(1,7):
+        #         ssim = compare_ssim(search_frame, self.get_Image_As_Array(str(i)))
+        #         print("searching for answer in image ssim index ", i)
+        #         print("Searching for possible answers using ssim with value", calculate_mse(search_frame, self.get_Image_As_Array(str(i))))
+        #         if abs(ssim) < IDENTICAL_TOLERENCE:
+        #             possible_answers.append(i)
         return possible_answers
     
     def another_method(self, main_frame, possible_option_index):
         answers = {}
         for i in possible_option_index:
+            # compare mainFrame with possible_option_index
             mse = calculate_mse(main_frame, self.get_Image_As_Array(str(i)))
             answers[i] = mse
+        print("MSE value for each possible answers are as follows")
         for key, value in answers.items():
             print(key, value)
         lowest_value = min(answers.values())
         for key, value in answers.items():
             if value == lowest_value:
                 answer_index = key
+        print("choosing lowest value to be", lowest_value, "with index ", answer_index)
+        print("-------------------------------------------------------------------")
         return answer_index
     
     def isIdenticalRow(self, f1, f2, f3):
+        # print("Inside isIdenticalRow")
         if self.isIdentical(f1,f3):
             if self.isIdentical(f2,f3):
                 return True
         return False
     def isIdentical(self, f1,f2):
+        # print("Reached inside is Identical method")
+        # print("DPR for calculating identical figure are ", calculate_mse(f1, f2))
+        # if self.calculate_mse(f1, f2) < IDENTICAL_TOLERENCE:
         if calculate_mse(f1, f2) < IDENTICAL_TOLERENCE:
             return True
         else:
@@ -236,6 +338,7 @@ class Agent:
             
     def isHorizontalFlip(self, f1, f2):
         print("HERE",calculate_mse(numpy.fliplr(f1),f2))
+        # if self.calculate_mse(numpy.fliplr(f1),f2) < DIFFERENCE_TOLERENCE:
         if calculate_mse(numpy.fliplr(f1), f2) < IDENTICAL_TOLERENCE:
             return True
         else: 
@@ -243,6 +346,7 @@ class Agent:
 
     def isVerticalFlip(self, f1, f2):
         print("HERE2",calculate_mse(numpy.flipud(f1),f2))
+        # if self.calculate_mse(numpy.flipud(f1),f2) < DIFFERENCE_TOLERENCE:
         if calculate_mse(numpy.flipud(f1), f2) < IDENTICAL_TOLERENCE:
             return True
         else:

@@ -21,7 +21,18 @@ class Agent:
         self.input_frames={}
         self.option_frames={}
         pass
-
+    
+    def Solve(self, problem):
+        answer = -1
+        self.loadData(problem)
+        if problem.problemType == '2x2':
+            print(problem.name)
+            answer = self.solve2x2(problem)
+        elif problem.problemType == '3x3':
+            print(problem.name)
+            answer = self.solve3x3(problem)
+        return answer
+    
     def loadData(self, problem):
         if problem.problemType == '2x2':            
             self.input_frames['A'] = rpmFrame('A', problem.figures['A'])
@@ -51,23 +62,42 @@ class Agent:
             self.option_frames['7'] = rpmFrame('7', problem.figures['7']) 
             self.option_frames['8'] = rpmFrame('8', problem.figures['8']) 
 
-    def get_Image_As_Array(self,frame_key):
-        if frame_key.isalpha():
-            return self.input_frames[frame_key].im_np_binary
+    def solve2x2(self,problem):
+        image_A = self.get_Image_As_Array('A')
+        image_B = self.get_Image_As_Array('B')
+        image_C = self.get_Image_As_Array('C')
+
+        if self.isIdentical(image_A,image_B):
+            print("Image A and B are Identical, searching for answer similar to C")
+            possible_options = self.search_answer_in_options(image_C)
+            if(len(possible_options) == 0):
+                return -10           
+            print("Possible options are", possible_options)
+            return self.another_method(image_C, possible_options)
+        elif self.isIdentical(image_A,image_C):
+            print("Image A and C are Identical, searching for answer similar to B")
+            possible_options = self.search_answer_in_options(image_B)
+            if(len(possible_options) == 0):
+                return -10           
+            print("Possible options are", possible_options)
+            return self.another_method(image_B, possible_options) 
+        elif self.isHorizontalFlip(image_A, image_B):
+            print("Image A and B are horizontally flipped, searching for answer similar to flipped horizontal C")
+            possible_options = self.search_answer_in_options(numpy.fliplr(image_C))
+            if(len(possible_options) == 0):
+                return -10           
+            print("Possible options are", possible_options)
+            return self.another_method(image_C, possible_options)
+        elif self.isVerticalFlip(image_A, image_C):
+            print("Image A and C are vertically flipped, searching for answer similar to flipped vertically B")
+            possible_options = self.search_answer_in_options(numpy.flipud(image_B))    
+            if(len(possible_options) == 0):
+                return -10           
+            print("Possible options are", possible_options)
+            return self.another_method(image_B, possible_options)
         else:
-            return self.option_frames[frame_key].im_np_binary
-        
-    def Solve(self, problem):
-        answer = -1
-        self.loadData(problem)
-        if problem.problemType == '2x2':
-            print(problem.name)
-            answer = self.solve2x2(problem)
-        elif problem.problemType == '3x3':
-            print(problem.name)
-            answer = self.solve3x3(problem)
-        return answer
-    
+            return -10
+
     def largest_value_index(self, arr, n):
     
         max = arr[0]
@@ -113,43 +143,55 @@ class Agent:
 
             print(self.largest_value_index(count, len(count))+1)
             return self.largest_value_index(count, len(count))+1
-
-    def solve2x2(self,problem):
-        image_A = self.get_Image_As_Array('A')
-        image_B = self.get_Image_As_Array('B')
-        image_C = self.get_Image_As_Array('C')
-
-        if self.isIdentical(image_A,image_B):
-            print("Image A and B are Identical, searching for answer similar to C")
-            possible_options = self.search_answer_in_options(image_C)
-            if(len(possible_options) == 0):
-                return -10           
-            print("Possible options are", possible_options)
-            return self.another_method(image_C, possible_options)
-        elif self.isIdentical(image_A,image_C):
-            print("Image A and C are Identical, searching for answer similar to B")
-            possible_options = self.search_answer_in_options(image_B)
-            if(len(possible_options) == 0):
-                return -10           
-            print("Possible options are", possible_options)
-            return self.another_method(image_B, possible_options) 
-        elif self.isHorizontalFlip(image_A, image_B):
-            print("Image A and B are horizontally flipped, searching for answer similar to flipped horizontal C")
-            possible_options = self.search_answer_in_options(numpy.fliplr(image_C))
-            if(len(possible_options) == 0):
-                return -10           
-            print("Possible options are", possible_options)
-            return self.another_method(image_C, possible_options)
-        elif self.isVerticalFlip(image_A, image_C):
-            print("Image A and C are vertically flipped, searching for answer similar to flipped vertically B")
-            possible_options = self.search_answer_in_options(numpy.flipud(image_B))    
-            if(len(possible_options) == 0):
-                return -10           
-            print("Possible options are", possible_options)
-            return self.another_method(image_B, possible_options)
+    def isIdenticalRow(self, f1, f2, f3):
+        if self.isIdentical(f1,f3):
+            if self.isIdentical(f2,f3):
+                return True
+        return False
+    
+    def isIdentical(self, f1,f2):
+        if self.calculate_mse(f1, f2) < IDENTICAL_TOLERENCE:
+            return True
         else:
-            return -10
-        
+            return False
+            
+    def isHorizontalFlip(self, f1, f2):
+        print("HERE",self.calculate_mse(numpy.fliplr(f1),f2))
+        if self.calculate_mse(numpy.fliplr(f1), f2) < IDENTICAL_TOLERENCE:
+            return True
+        else: 
+            return False
+
+    def isVerticalFlip(self, f1, f2):
+        print("HERE2",self.calculate_mse(numpy.flipud(f1),f2))
+        if self.calculate_mse(numpy.flipud(f1), f2) < IDENTICAL_TOLERENCE:
+            return True
+        else:
+            return False
+    def calculate_mse(self, f1, f2):
+        return numpy.square(numpy.subtract(f1,f2)).mean()
+    
+    def search_answer_in_options(self, search_frame):
+        possible_answers = []
+        for i in range(1,7):
+            if self.calculate_mse(search_frame, self.get_Image_As_Array(str(i))) < IDENTICAL_TOLERENCE:
+                print(i)
+                possible_answers.append(i)
+        return possible_answers
+    
+    def another_method(self, main_frame, possible_option_index):
+        answers = {}
+        for i in possible_option_index:
+            mse = self.calculate_mse(main_frame, self.get_Image_As_Array(str(i)))
+            answers[i] = mse
+        for key, value in answers.items():
+            print(key, value)
+        lowest_value = min(answers.values())
+        for key, value in answers.items():
+            if value == lowest_value:
+                answer_index = key
+        return answer_index
+
     def calculate_horizontal_relationship_1(self,a,c,d,f,g):
         DPR_AC = self.dark_pixel_ratio(a, c)
         DPR_DF = self.dark_pixel_ratio(d, f)
@@ -201,52 +243,6 @@ class Agent:
             if abs(relationship_dpr - option_dpr) < 0.4:
                 possible_choice.append(i)
         return possible_choice
-  
-    def search_answer_in_options(self, search_frame):
-        possible_answers = []
-        for i in range(1,7):
-            if calculate_mse(search_frame, self.get_Image_As_Array(str(i))) < IDENTICAL_TOLERENCE:
-                print(i)
-                possible_answers.append(i)
-        return possible_answers
-    
-    def another_method(self, main_frame, possible_option_index):
-        answers = {}
-        for i in possible_option_index:
-            mse = calculate_mse(main_frame, self.get_Image_As_Array(str(i)))
-            answers[i] = mse
-        for key, value in answers.items():
-            print(key, value)
-        lowest_value = min(answers.values())
-        for key, value in answers.items():
-            if value == lowest_value:
-                answer_index = key
-        return answer_index
-    
-    def isIdenticalRow(self, f1, f2, f3):
-        if self.isIdentical(f1,f3):
-            if self.isIdentical(f2,f3):
-                return True
-        return False
-    def isIdentical(self, f1,f2):
-        if calculate_mse(f1, f2) < IDENTICAL_TOLERENCE:
-            return True
-        else:
-            return False
-            
-    def isHorizontalFlip(self, f1, f2):
-        print("HERE",calculate_mse(numpy.fliplr(f1),f2))
-        if calculate_mse(numpy.fliplr(f1), f2) < IDENTICAL_TOLERENCE:
-            return True
-        else: 
-            return False
-
-    def isVerticalFlip(self, f1, f2):
-        print("HERE2",calculate_mse(numpy.flipud(f1),f2))
-        if calculate_mse(numpy.flipud(f1), f2) < IDENTICAL_TOLERENCE:
-            return True
-        else:
-            return False
 
     def dark_pixel_ratio(self, a, b):
         dark_pixels_a = a.size - numpy.count_nonzero(a)
@@ -260,5 +256,9 @@ class Agent:
         intersecting_dark_pixel = intersection.size - numpy.count_nonzero(intersection)    
         return intersecting_dark_pixel / (a.size - numpy.count_nonzero(a) + a.size - numpy.count_nonzero(b))
 
-def calculate_mse(f1, f2):
-    return numpy.square(numpy.subtract(f1,f2)).mean()
+    def get_Image_As_Array(self,frame_key):
+        if frame_key.isalpha():
+            return self.input_frames[frame_key].im_np_binary
+        else:
+            return self.option_frames[frame_key].im_np_binary
+

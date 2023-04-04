@@ -5,8 +5,8 @@ import cv2
 
 #******************************************************
 # Name: Apurva Gandhi
-# Last Updated Date: 03.15.2023
-# Last completed assignment: Milestone 3
+# Last Updated Date: 03.16.2023
+# Last completed assignment: Milest one 3
 # Agent for solving Raven's Progressive Matrices. 
 #******************************************************
 DIFFERENCE_TOLERENCE = 0.01
